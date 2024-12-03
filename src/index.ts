@@ -4,7 +4,23 @@ import { ConversionOptions, ConversionResult, WorkerItem } from '../typings/inde
 
 let poolSize = 2;
 let executionQueue: WorkerItem[] = [];
-const idleQueue: WorkerItem[] = [];
+let idleQueue: WorkerItem[] = [];
+let calibrePath: string = '';
+
+/**
+ * Sets the path to the Calibre installation directory.
+ *
+ * @param path - The path to the Calibre installation directory.
+ * 
+ * @example
+ * ```typescript
+ * setCalibrePath('/path/to/calibre');
+ * ```
+ */
+export function setCalibrePath(_path: string) {
+    calibrePath = path.resolve(process.cwd(), _path);
+    console.log(`[calibre-node] Calibre path set to ${calibrePath}`);
+}
 
 
 /**
@@ -19,12 +35,12 @@ const idleQueue: WorkerItem[] = [];
  */
 export function setPoolSize(size: number) {
     if (size < 1) {
-        console.warn('Pool size must be at least 1. Defaulting to 1.');
+        console.warn('[calibre-node] Pool size must be at least 1. Defaulting to 1.');
         poolSize = 1;
     } else {
         poolSize = size;
     }
-    console.log(`Worker pool size set to ${poolSize}`);
+    console.log(`[calibre-node] Worker pool size set to ${poolSize}`);
 }
 
 /**
@@ -62,6 +78,7 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
 
     const log = (message: string) => {
         if (!data.silent) {
+            message = `[calibre-node] ${message}`;
             console.log(message);
         }
     };
@@ -94,27 +111,33 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
 
     return new Promise((resolve, reject) => {
         const resolvedInput = path.resolve(process.cwd(), data.input);
+        log(`Input file ${resolvedInput}`);
         const resolvedOutput = path.resolve(process.cwd(), data.output);
+        log(`Output will be saved to ${resolvedOutput}`);
 
         const worker = new Worker(path.join(__dirname, './converter.js'), {
-            env: {
+            workerData: {
                 ...data,
                 input: resolvedInput,
                 output: resolvedOutput,
                 delete: (data.delete || false).toString(),
-                silent: (data.silent || true).toString(),
-                ...getVerbosity(data.verbose)
+                silent: (data.silent !== undefined ? data.silent : false).toString(),
+                ...getVerbosity(data.verbose),
+                calibrePath
             }
         });
 
         const channel = new MessageChannel();
         const onMessage = (message: any) => {
+            log(message.stdout);
             log(`Worker with id ${worker.threadId} completed conversion`);
-            resolve({
+            const result = {
                 success: true,
-                outputPath: resolvedOutput,
-                ...message
-            });
+                filePath: resolvedOutput,
+                filename: path.basename(resolvedOutput),
+                extension: path.extname(resolvedOutput).slice(1),
+            }
+            resolve(result);
         };
         const onClose = () => {
             log(`Channel closed for worker with id ${worker.threadId}`);
@@ -130,10 +153,28 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
                 });
             }
         };
+        const onChannelMessageError = (err: Error) => {
+            log(`Channel for worker with id ${worker.threadId} encountered an error: ${err.message}`);
+            reject({
+                success: false,
+                outputPath: resolvedOutput,
+                error: err.message
+            });
+        }
+        const onWorkerError = (err: Error) => {
+            log(`Worker with id ${worker.threadId} encountered an error: ${err.message}`);
+            reject({
+                success: false,
+                outputPath: resolvedOutput,
+                error: err.message
+            });
+        }
 
         channel.port2.on('message', onMessage);
+        channel.port2.on('messageerror', onChannelMessageError);
         channel.port2.on('close', onClose);
         worker.on('exit', onExit);
+        worker.on('error', onWorkerError);
 
         addWorkerToQueue({ worker, port: channel.port1, options: data });
     });

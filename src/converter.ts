@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { parentPort } from 'worker_threads';
+import { parentPort, workerData } from 'worker_threads';
 import execPromise from './execPromise';
 import { performance } from 'perf_hooks';
 import { ConversionParams } from '../typings/converter';
@@ -7,11 +7,12 @@ import { ConversionParams } from '../typings/converter';
 if (!parentPort) throw new Error('This script must be run as a worker thread!');
 
 const getConversionParams = (): ConversionParams => {
-    return process.env as ConversionParams;
+    return workerData as ConversionParams;
 };
 
 const buildCommand = (inputPath: string, outputPath: string, params: ConversionParams): string => {
-    const nonFlagParams = ['input', 'output', 'delete', 'silent'];
+    const nonFlagParams = ['input', 'output', 'delete', 'silent', 'calibrePath'];
+    const calibrePath = params.calibrePath === '' ? '' : params.calibrePath + '/';
     let command = `ebook-convert "${inputPath}" "${outputPath}"`;
 
     Object.keys(params).forEach(key => {
@@ -23,7 +24,7 @@ const buildCommand = (inputPath: string, outputPath: string, params: ConversionP
         }
     });
 
-    return command;
+    return calibrePath + command;
 };
 
 const handleConversion = async (params: ConversionParams, value: any) => {
@@ -39,18 +40,22 @@ const handleConversion = async (params: ConversionParams, value: any) => {
 
     const log = (message: string) => {
         if (params.silent !== 'true') {
+            message = `[calibre-node] ${message}`;
             console.log(message);
         }
     };
 
-    log(`Starting conversion for ${inputPath}...`);
-
     try {
-        const message = await execPromise(command);
+        log(`Starting conversion with command: ${command}`);
+        const stdout = await execPromise(command);
+        
+        if (params.verbose === 'med' || params.verbose === 'high')
+            stdout.split('\n').forEach(log => console.log("[calibre] " + log));
+        
         const duration = performance.now() - startTime;
         log(`Conversion completed in ${duration}ms`);
 
-        value.port.postMessage({ ...params, message, duration });
+        value.port.postMessage({ ...params });
         value.port.close();
 
         if (params.delete === 'true') {
@@ -65,8 +70,24 @@ const handleConversion = async (params: ConversionParams, value: any) => {
     }
 };
 
-parentPort.once('message', (value) => {
+const checkCalibre = async (calibrePath: string) => {
+    try {
+        calibrePath = calibrePath === '' ? '' : calibrePath + '/';
+        await execPromise(calibrePath + 'ebook-convert --version');
+    } catch (err) {
+        const message = (err as Error).message;
+        if (message.includes('not found')) {
+            console.error("[calibre-node] " + 'Calibre is not installed. Please install it from https://calibre-ebook.com/download');
+        } else {
+            console.error("[calibre-node] " + message);
+        }
+        process.exit(1);
+    }
+};
+
+parentPort.once('message', async (value) => {
     const params = getConversionParams();
+    await checkCalibre(params.calibrePath);
     handleConversion(params, value).catch(err => {
         console.error(err);
         process.exit(1);
