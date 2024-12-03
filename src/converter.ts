@@ -17,7 +17,12 @@ const buildCommand = (inputPath: string, outputPath: string, params: ConversionP
 
     Object.keys(params).forEach(key => {
         if (nonFlagParams.includes(key)) return;
-        if (params[key] !== undefined && [true, 'true'].includes(params[key])) {
+        if (key === 'verbose' && params[key] === 'low') return;
+        if (key === 'verbose' && params[key] === 'med') {
+            command += ' --verbose';
+        } else if (key === 'verbose' && params[key] === 'high') {
+            command += ' --verbose --verbose';
+        } else if (params[key] !== undefined && [true, 'true'].includes(params[key])) {
             command += ` --${key}`;
         } else {
             command += ` --${key}="${params[key]}"`;
@@ -39,7 +44,7 @@ const handleConversion = async (params: ConversionParams, value: any) => {
     const command = buildCommand(inputPath, outputPath, params);
 
     const log = (message: string) => {
-        if (params.silent !== 'true') {
+        if (!params.silent) {
             message = `[calibre-node] ${message}`;
             console.log(message);
         }
@@ -49,16 +54,16 @@ const handleConversion = async (params: ConversionParams, value: any) => {
         log(`Starting conversion with command: ${command}`);
         const stdout = await execPromise(command);
         
-        if (params.verbose === 'med' || params.verbose === 'high')
-            stdout.split('\n').forEach(log => console.log("[calibre] " + log));
+        if (params.verbose)
+            stdout.split('\n').forEach(_log => console.log("[calibre] " + _log));
         
         const duration = performance.now() - startTime;
-        log(`Conversion completed in ${duration}ms`);
+        log(`Conversion completed in ${duration.toFixed(3)} ms`);
 
         value.port.postMessage({ ...params });
         value.port.close();
 
-        if (params.delete === 'true') {
+        if (params.delete) {
             fs.unlink(inputPath, (err) => {
                 if (err) throw err;
                 log(`Deleted input file ${inputPath}`);
@@ -89,7 +94,7 @@ parentPort.once('message', async (value) => {
     const params = getConversionParams();
     await checkCalibre(params.calibrePath);
     handleConversion(params, value).catch(err => {
-        console.error(err);
+        console.error('[calibre-node] ' + err.message);
         process.exit(1);
     });
 });

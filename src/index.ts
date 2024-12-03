@@ -4,7 +4,7 @@ import { ConversionOptions, ConversionResult, WorkerItem } from '../typings/inde
 
 let poolSize = 2;
 let executionQueue: WorkerItem[] = [];
-let idleQueue: WorkerItem[] = [];
+const idleQueue: WorkerItem[] = [];
 let calibrePath: string = '';
 
 /**
@@ -75,19 +75,14 @@ export function setPoolSize(size: number) {
  */
 export function convert(data: ConversionOptions): Promise<ConversionResult> {
     if (!isMainThread) return Promise.reject(new Error('Not in main thread'));
+    if (data.silent === undefined) data.silent = true;
+    if (data.delete === undefined) data.delete = false;
 
     const log = (message: string) => {
         if (!data.silent) {
             message = `[calibre-node] ${message}`;
             console.log(message);
         }
-    };
-
-    const getVerbosity = (level: string | undefined) : NodeJS.Dict<string> => {
-        let verbosity = {};
-        if (level === "med") verbosity =  { verbose: "true" };
-        if (level === "high") verbosity = { verbose: "true", v: "true" };
-        return verbosity;
     };
 
     const removeWorkerFromQueue = (id: number) => {
@@ -122,14 +117,13 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
                 output: resolvedOutput,
                 delete: (data.delete || false).toString(),
                 silent: (data.silent !== undefined ? data.silent : false).toString(),
-                ...getVerbosity(data.verbose),
                 calibrePath
             }
         });
 
         const channel = new MessageChannel();
-        const onMessage = (message: any) => {
-            log(message.stdout);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const onMessage = (_message: any) => {
             log(`Worker with id ${worker.threadId} completed conversion`);
             const result = {
                 success: true,
