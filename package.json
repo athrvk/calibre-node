@@ -6,6 +6,10 @@
   "description": "A lightweight, high-performance Node.js ebook conversion library powered by Calibre, featuring built-in queue management and parallel processing capabilities.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/athrvk/calibre-node"
+  },
   "scripts": {
     "prebuild": "rm -rf dist",
     "build": "tsc",
