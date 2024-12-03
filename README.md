@@ -58,10 +58,21 @@ Additional conversion options supported by Calibre can also be included. Refer t
 
 The conversion promise resolves with a result object containing:
 
-- `success` (boolean): Whether the conversion completed successfully.
-- `outputPath` (string): The absolute path to the converted file.
-- Additional metadata from the conversion process, if available.
+- `success` (boolean): Indicates whether the conversion was successful
+- `filePath` (string): The full path where the converted file was saved
+- `filename` (string): The name of the converted file without extension
+- `extension` (string): The file extension of the converted file
+- `error` (string, optional): Error message if the conversion failed
 
+```typescript
+interface ConversionResult {
+    success: boolean;
+    filePath: string;
+    filename: string;
+    extension: string;
+    error?: string;
+}
+```
 
 ### Managing the Thread Pool
 
