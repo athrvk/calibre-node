@@ -9,7 +9,7 @@
   "homepage": "https://github.com/athrvk/calibre-node",
   "repository": {
     "type": "git",
-    "url": "https://github.com/athrvk/calibre-node"
+    "url": "git+https://github.com/athrvk/calibre-node.git"
   },
   "scripts": {
     "prebuild": "rm -rf dist",
