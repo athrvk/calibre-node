@@ -1,0 +1,54 @@
+{
+  "name": "calibre-node",
+  "version": "0.1.0",
+  "author": "Atharva Kusumbia <atharvakusumbia@gmail.com>",
+  "license": "MIT",
+  "description": "A lightweight, high-performance Node.js ebook conversion library powered by Calibre, featuring built-in queue management and parallel processing capabilities.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "build:check": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.16.0",
+    "@types/node": "^22.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.17.0",
+    "@typescript-eslint/parser": "^8.17.0",
+    "eslint": "^9.16.0",
+    "prettier": "^3.4.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "ebook-converter",
+    "pdf-conversion",
+    "calibre-nodejs",
+    "document-transformation",
+    "ebook-processing",
+    "file-conversion",
+    "multiformat-converter",
+    "nodejs-calibre",
+    "Convert PDF",
+    "Convert",
+    "NodeJS PDF Converter",
+    "Ebook Converter",
+    "Convert Ebook",
+    "Nodejs Calibre",
+    "Nodejs Converter Calibre"
+  ]
+}

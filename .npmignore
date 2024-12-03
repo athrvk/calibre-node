@@ -1,0 +1,12 @@
+# Exclude src
+src/
+
+# Exclude test and example directories
+tests/
+examples/
+
+# Exclude configuration and log files
+.eslintrc.js
+.prettierrc
+tsconfig.json
+*.log
