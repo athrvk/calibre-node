@@ -19,7 +19,7 @@ let calibrePath: string = '';
  */
 export function setCalibrePath(_path: string) {
     calibrePath = path.resolve(process.cwd(), _path);
-    console.log(`[calibre-node] Calibre path set to ${calibrePath}`);
+    console.log(`[calibre-node][thread-main] Calibre path set to ${calibrePath}`);
 }
 
 
@@ -35,12 +35,12 @@ export function setCalibrePath(_path: string) {
  */
 export function setPoolSize(size: number) {
     if (size < 1) {
-        console.warn('[calibre-node] Pool size must be at least 1. Defaulting to 1.');
+        console.warn('[calibre-node][thread-main] Pool size must be at least 1. Defaulting to 1.');
         poolSize = 1;
     } else {
         poolSize = size;
     }
-    console.log(`[calibre-node] Worker pool size set to ${poolSize}`);
+    console.log(`[calibre-node][thread-main] Worker pool size set to ${poolSize}`);
 }
 
 /**
@@ -80,7 +80,7 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
 
     const log = (message: string) => {
         if (!data.silent) {
-            message = `[calibre-node] ${message}`;
+            message = `[calibre-node][thread-main] ${message}`;
             console.log(message);
         }
     };
@@ -115,8 +115,6 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
                 ...data,
                 input: resolvedInput,
                 output: resolvedOutput,
-                delete: (data.delete || false).toString(),
-                silent: (data.silent !== undefined ? data.silent : false).toString(),
                 calibrePath
             }
         });
@@ -124,7 +122,7 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
         const channel = new MessageChannel();
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const onMessage = (_message: any) => {
-            log(`Worker with id ${worker.threadId} completed conversion`);
+            // log(`Worker with id ${worker.threadId} completed conversion`);
             const result = {
                 success: true,
                 filePath: resolvedOutput,
@@ -134,12 +132,12 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
             resolve(result);
         };
         const onClose = () => {
-            log(`Channel closed for worker with id ${worker.threadId}`);
+            // log(`Channel closed for worker with id ${worker.threadId}`);
             removeWorkerFromQueue(worker.threadId);
         }
         const onExit = (code: number) => {
             if (code !== 0) {
-                log(`Worker with id ${worker.threadId} stopped with exit code ${code}`);
+                // log(`Worker with id ${worker.threadId} stopped with exit code ${code}`);
                 reject({
                     success: false,
                     outputPath: resolvedOutput,
@@ -148,7 +146,7 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
             }
         };
         const onChannelMessageError = (err: Error) => {
-            log(`Channel for worker with id ${worker.threadId} encountered an error: ${err.message}`);
+            // log(`Channel for worker with id ${worker.threadId} encountered an error: ${err.message}`);
             reject({
                 success: false,
                 outputPath: resolvedOutput,
@@ -156,7 +154,7 @@ export function convert(data: ConversionOptions): Promise<ConversionResult> {
             });
         }
         const onWorkerError = (err: Error) => {
-            log(`Worker with id ${worker.threadId} encountered an error: ${err.message}`);
+            // log(`Worker with id ${worker.threadId} encountered an error: ${err.message}`);
             reject({
                 success: false,
                 outputPath: resolvedOutput,

@@ -1,10 +1,12 @@
 import fs from 'fs';
-import { parentPort, workerData } from 'worker_threads';
+import { parentPort, workerData, threadId } from 'worker_threads';
 import execPromise from './execPromise';
 import { performance } from 'perf_hooks';
 import { ConversionParams } from '../typings/converter';
 
 if (!parentPort) throw new Error('This script must be run as a worker thread!');
+
+const logPrefix = `[calibre-node][thread-${threadId}] `;
 
 const getConversionParams = (): ConversionParams => {
     return workerData as ConversionParams;
@@ -37,7 +39,7 @@ const handleConversion = async (params: ConversionParams, value: any) => {
     const outputPath = params.output;
 
     if (!inputPath || !fs.existsSync(inputPath)) {
-        throw new Error(`Input path ${inputPath} not found!`);
+        throw new Error(`[calibre-node][thread-${threadId}] Input path ${inputPath} not found!`);
     }
 
     const startTime = performance.now();
@@ -45,13 +47,14 @@ const handleConversion = async (params: ConversionParams, value: any) => {
 
     const log = (message: string) => {
         if (!params.silent) {
-            message = `[calibre-node] ${message}`;
+            message = `[calibre-node][thread-${threadId}] ${message}`;
             console.log(message);
         }
     };
 
     try {
-        log(`Starting conversion with command: ${command}`);
+        log(`Starting conversion:`)
+        log(command);
         const stdout = await execPromise(command);
         
         if (params.verbose)
@@ -82,9 +85,9 @@ const checkCalibre = async (calibrePath: string) => {
     } catch (err) {
         const message = (err as Error).message;
         if (message.includes('not found')) {
-            console.error("[calibre-node] " + 'Calibre is not installed. Please install it from https://calibre-ebook.com/download');
+            console.error(logPrefix + 'Calibre is not installed. Please install it from https://calibre-ebook.com/download');
         } else {
-            console.error("[calibre-node] " + message);
+            console.error(logPrefix + message);
         }
         process.exit(1);
     }
@@ -94,7 +97,7 @@ parentPort.once('message', async (value) => {
     const params = getConversionParams();
     await checkCalibre(params.calibrePath);
     handleConversion(params, value).catch(err => {
-        console.error('[calibre-node] ' + err.message);
+        console.error(logPrefix + err.message);
         process.exit(1);
     });
 });
