@@ -84,6 +84,14 @@ calibre.setPoolSize(2); // Allows two conversions to run simultaneously, Default
 
 Conversions exceeding the pool size will be queued and processed when threads become available.
 
+### Set Calibre Path
+
+If the `ebook-convert` command is not in your system's PATH, you can specify the full path to the Calibre CLI tools:
+
+```javascript
+calibre.setCalibrePath('/path/to/calibre');
+```
+
 ## Contributing
 
 This module is open-source under the MIT license. Contributions, issues, and feature requests are welcome! Feel free to fork and submit pull requests.
