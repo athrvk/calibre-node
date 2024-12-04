@@ -29,6 +29,9 @@ jobs:
       # Push the version bump commit
       - name: Push version bump
         run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git commit -am "chore: bump version [skip ci]"
           git push origin master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
