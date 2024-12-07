@@ -2,7 +2,15 @@ import fs from 'fs';
 import { parentPort, workerData, threadId } from 'worker_threads';
 import execPromise from './execPromise';
 import { performance } from 'perf_hooks';
-import { ConversionParams } from '../typings/converter';
+
+export interface ConversionParams {
+    input: string;
+    output: string;
+    delete: boolean;
+    silent: boolean;
+    calibrePath: string;
+    [key: string]: string | boolean;
+}
 
 if (!parentPort) throw new Error('This script must be run as a worker thread!');
 
