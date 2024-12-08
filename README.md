@@ -1,6 +1,8 @@
 
 # calibre-node
 
+[![NPM Version](https://img.shields.io/npm/v/calibre-node)](https://www.npmjs.com/package/calibre-node) ![NPM Downloads](https://img.shields.io/npm/dy/calibre-node) 
+
 calibre-node is a lightweight Node.js module that provides ebook conversion capabilities by wrapping the Calibre CLI tools. It offers built-in queuing and threading to efficiently handle multiple conversions with ease. Please note that this module does not handle the actual conversion algorithms; it interfaces with Calibre's CLI utilities to perform conversions.
 
 ## Installation
