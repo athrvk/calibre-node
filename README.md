@@ -21,6 +21,24 @@ To install calibre-node, use npm:
 npm install calibre-node
 ```
 
+### Installing Calibre
+
+The package includes a CLI tool to help install Calibre:
+
+```bash
+npx calibre-node install calibre
+```
+
+When installing Calibre using the CLI tool, you can specify additional options:
+
+- `--install_dir=*path/to/install*`: The directory where Calibre will be installed. The default is `./calibre-bin` (root of the project).
+
+Example usage:
+
+```bash
+npx calibre-node install calibre --install_dir=/custom/path/to/calibre
+```
+
 ## Usage
 
 After installing both Calibre and calibre-node, you can start converting ebooks in your Node.js application.
