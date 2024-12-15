@@ -1,6 +1,6 @@
 {
   "name": "calibre-node",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "author": "Atharva Kusumbia <atharvakusumbia@gmail.com>",
   "license": "MIT",
   "description": "A lightweight, high-performance Node.js ebook conversion library powered by Calibre, featuring built-in queue management and parallel processing capabilities.",
