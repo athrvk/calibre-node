@@ -19,7 +19,7 @@ async function isCommandAvailable(command: string): Promise<boolean> {
 
 export async function installCalibre(): Promise<void> {
     const platform = os.platform();
-    let installDir = path.resolve(__dirname, '../../calibre-bin');
+    let installDir = path.resolve(process.cwd(), 'calibre-bin');
     const installDirArg = process.argv.find(arg => arg.startsWith('--install_dir='));
 
     try {
