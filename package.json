@@ -22,7 +22,7 @@
     "install:calibre": "node dist/app.js install calibre"
   },
   "bin": {
-    "calibre-node": "./dist/app.js"
+    "calibre-node": "dist/app.js"
   },
   "files": [
     "dist"
