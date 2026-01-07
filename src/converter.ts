@@ -47,7 +47,7 @@ const handleConversion = async (params: ConversionParams, value: any) => {
     const outputPath = params.output;
 
     if (!inputPath || !fs.existsSync(inputPath)) {
-        throw new Error(`[calibre-node][thread-${threadId}] Input path ${inputPath} not found!`);
+        throw new Error(`${logPrefix}Input path ${inputPath} not found!`);
     }
 
     const startTime = performance.now();
@@ -55,7 +55,7 @@ const handleConversion = async (params: ConversionParams, value: any) => {
 
     const log = (message: string) => {
         if (!params.silent) {
-            message = `[calibre-node][thread-${threadId}] ${message}`;
+            message = `${logPrefix}${message}`;
             console.log(message);
         }
     };
@@ -93,6 +93,7 @@ const checkCalibre = async (calibrePath: string) => {
     } catch (err) {
         const message = (err as Error).message;
         if (message.includes('not found')) {
+            console.error(logPrefix + 'Calibre executable not found in ' + (calibrePath === '' ? 'system PATH' : `specified path: ${calibrePath}`));
             console.error(logPrefix + 'Calibre is not installed. Please install it from https://calibre-ebook.com/download');
         } else {
             console.error(logPrefix + message);
