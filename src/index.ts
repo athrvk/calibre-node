@@ -59,6 +59,11 @@ export interface WorkerItem {
  * ```
  */
 export function setCalibrePath(_path: string) {
+    if (!_path || _path.trim() === '') {
+        console.warn('[calibre-node][thread-main] Calibre path not provided. Reverting to system PATH.');
+        calibrePath = '';
+        return;
+    }
     calibrePath = path.resolve(process.cwd(), _path);
     console.log(`[calibre-node][thread-main] Calibre path set to ${calibrePath}`);
 }
