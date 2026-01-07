@@ -7,6 +7,10 @@ on:
   push:
     branches: master
 
+permissions:
+  id-token: write  # Required for OIDC trusted publishing
+  contents: write  # Required for git push
+
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
@@ -40,7 +44,5 @@ jobs:
       # Build the project
       - run: npm run build
 
-      # Publish the package
+      # Publish the package (uses OIDC - no token needed)
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
