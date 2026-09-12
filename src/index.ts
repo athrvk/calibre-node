@@ -133,6 +133,20 @@ export class ConversionError extends Error {
     constructor(outputPath: string, message: string, detail: ConversionErrorDetail = {}) {
         super(message);
         this.name = 'ConversionError';
+        // `Error`'s own `message` (set by `super()` above) is NON-enumerable
+        // in V8, unlike every other field on this class (standard class
+        // fields are enumerable). Left alone, `JSON.stringify(err)` and any
+        // consumer that does a shallow/enumerable-only copy of this error -
+        // e.g. Mongoose casting it into a `{ type: Object }` schema field,
+        // as toKindle's DLQ write does - silently drops `message` even
+        // though `error` (below) duplicates the same string. Redefine it as
+        // enumerable so both survive identically.
+        Object.defineProperty(this, 'message', {
+            value: message,
+            enumerable: true,
+            writable: true,
+            configurable: true
+        });
         this.outputPath = outputPath;
         this.error = message;
         if (detail.stderr !== undefined) this.stderr = detail.stderr;
