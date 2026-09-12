@@ -1,13 +1,23 @@
 {
     "compilerOptions": {
       "target": "es2020",
-      "module": "CommonJS",
-      "moduleResolution": "node",
-      "lib": ["es6", "es2015", "es2020"],
+      // "node16" replaces the legacy "node"/node10 resolver, which TypeScript 6
+      // deprecates and TypeScript 7 removes. This package has no "type" field,
+      // so it is still emitted as CommonJS -- the published output is unchanged.
+      "module": "node16",
+      "moduleResolution": "node16",
+      // es2022 supersedes the previous es6/es2015/es2020 list and is what makes
+      // the standard `new Error(msg, { cause })` overload available. `target`
+      // is deliberately left at es2020 so the emitted JavaScript is unchanged.
+      "lib": ["es2022"],
       "declaration": true,
       "outDir": "dist",
       "strict": true,
       "rootDir": "src",
+      // TypeScript 6 no longer implicitly pulls in every installed `@types/*`
+      // package, so the Node globals (process, console, __dirname, setTimeout)
+      // must be requested explicitly.
+      "types": ["node"],
       "esModuleInterop": true,
       "resolveJsonModule": true,
       "skipLibCheck": true,

@@ -15,7 +15,10 @@ export default tseslint.config(
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: true
+        // A lint-only project so that `*.test.ts` files -- which the build
+        // config deliberately excludes from the published output -- are still
+        // type-aware linted.
+        project: ['./tsconfig.eslint.json']
       }
     }
   },

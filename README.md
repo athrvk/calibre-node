@@ -70,7 +70,8 @@ The `convert` function accepts an object with the following properties:
 - `output` (string, required): The path where the output file will be saved, including the desired extension.
 - `delete` (boolean, optional): Whether to delete the input file after conversion. Default is `false`.
 - `silent` (boolean, optional): If set to `true`, suppresses calibre-node package's console output. Default is `true`.
-- `verbose` ("low" | "med" | "high", optional): Sets the verbosity level of calibre conversion output. Default is `"low"`.
+- `verbose` ("low" | "med" | "high", optional): Sets the verbosity level of calibre conversion output. Default is `"low"`. Any other value is rejected with a clear error rather than being passed through to Calibre.
+- `timeoutMs` (number, optional): Maximum time the underlying `ebook-convert` process may run before it is killed with `SIGKILL`. Default is `120000` (2 minutes). `ebook-convert` can hang indefinitely on malformed input, so this guarantees a conversion always terminates and never permanently occupies a pool slot.
 
 Additional conversion options supported by Calibre can also be included. Refer to the [Calibre conversion documentation](https://manual.calibre-ebook.com/generated/en/ebook-convert.html) for a full list of parameters.
 
@@ -94,15 +95,65 @@ interface ConversionResult {
 }
 ```
 
+### Conversion Errors
+
+On failure the promise rejects with a `ConversionError`. It is a real `Error`
+(so it carries a stack trace) and additionally exposes the `success`,
+`outputPath` and `error` properties that earlier versions rejected with, so
+existing `.catch()` handlers keep working unchanged:
+
+```typescript
+class ConversionError extends Error {
+    success: false;
+    outputPath: string;
+    error: string;          // same string as `message`
+    stderr?: string;        // ebook-convert's stderr - why Calibre rejected the file
+    stdout?: string;
+    code?: number | string | null;
+    signal?: string | null; // e.g. 'SIGKILL'
+    killed?: boolean;
+    timedOut?: boolean;     // true when the conversion hung and was killed
+    queueFull?: boolean;    // true when the request was refused as backpressure
+}
+```
+
+`timedOut` lets you distinguish "the conversion hung and we killed it" from
+"Calibre rejected this file", and a partially-written output file is removed
+automatically on any failure.
+
+```javascript
+calibre.convert({ /* ... */ }).catch(err => {
+    if (err.timedOut) console.error('Conversion hung and was killed');
+    else if (err.queueFull) console.error('Server busy, retry later');
+    else console.error('Calibre said:', err.stderr);
+});
+```
+
 ### Managing the Thread Pool
 
 You can control the number of concurrent conversions by setting the thread pool size:
 
 ```javascript
-calibre.setPoolSize(2); // Allows two conversions to run simultaneously, Default is 1
+calibre.setPoolSize(2); // Allows two conversions to run simultaneously. Default is 2.
 ```
 
-Conversions exceeding the pool size will be queued and processed when threads become available.
+Worker threads are created only when a pool slot is free, so `setPoolSize` is a
+hard bound on concurrent threads and memory, not just on concurrent executions.
+
+Conversions exceeding the pool size are queued and processed as threads become
+available. The queue is bounded: once `maxQueueSize` requests are already
+waiting, further `convert()` calls reject immediately with `queueFull: true`
+instead of the queue growing without limit.
+
+```javascript
+calibre.setMaxQueueSize(100); // Default is 100. Pass Infinity for an unbounded queue.
+
+// Introspection, useful for health checks and metrics:
+calibre.getPoolSize();
+calibre.getMaxQueueSize();
+calibre.getActiveCount();  // conversions currently running
+calibre.getPendingCount(); // conversions waiting for a slot
+```
 
 ### Set Calibre Path
 

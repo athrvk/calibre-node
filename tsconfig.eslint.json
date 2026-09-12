@@ -1,0 +1,8 @@
+{
+  // Lint-only project: identical to the build config but WITHOUT excluding
+  // `**/*.test.ts`, so typed linting covers the test files too. The build
+  // (tsconfig.json) still excludes them from the published output.
+  "extends": "./tsconfig.json",
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
